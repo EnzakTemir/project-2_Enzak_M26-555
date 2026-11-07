@@ -3,7 +3,6 @@ from primitive_db.engine import run, welcome
 
 
 def main():
-    welcome()
     run()
 
 
