@@ -8,6 +8,9 @@ def load_metadata(filepath):
             return json.load(f)
     except FileNotFoundError:
         return {}
+    except json.JSONDecodeError:
+        print(f"Предупреждение: Файл {filepath} повреждён. Создаю новый.")
+        return {}
 
 
 def save_metadata(filepath, data):

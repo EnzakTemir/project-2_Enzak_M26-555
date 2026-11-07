@@ -1,24 +1,39 @@
 #!/usr/bin/env python3
+
 VALID_TYPES = {"int", "str", "bool"}
 
 
+def _parse_column(col_string):
+    if ":" not in col_string:
+        return None
+
+    name, _, col_type = col_string.partition(":")
+    
+    if not name or not col_type or col_type not in VALID_TYPES or " " in name:
+        return None
+        
+    return name, col_type
+
+
 def create_table(metadata, table_name, columns):
+    if not table_name:
+        print("Ошибка: Имя таблицы не может быть пустым.")
+        return metadata
+
     if table_name in metadata:
         print(f'Ошибка: Таблица "{table_name}" уже существует.')
         return metadata
 
     parsed_columns = []
     seen_names = set()
+
     for col in columns:
-        if ":" not in col:
+        parsed = _parse_column(col)
+        if not parsed:
             print(f"Некорректное значение: {col}. Попробуйте снова.")
             return metadata
 
-        name, _, col_type = col.partition(":")
-        if not name or not col_type or col_type not in VALID_TYPES:
-            print(f"Некорректное значение: {col}. Попробуйте снова.")
-            return metadata
-
+        name, col_type = parsed
         if name in seen_names:
             print(f"Некорректное значение: {col}. Попробуйте снова.")
             return metadata
@@ -28,9 +43,11 @@ def create_table(metadata, table_name, columns):
 
     user_id = None
     final_columns = []
+
     for c in parsed_columns:
         if c["name"].upper() == "ID":
-            c["name"] = "ID"  # нормализуем регистр
+            c["name"] = "ID"
+            c["type"] = "int"
             user_id = c
         else:
             final_columns.append(c)
@@ -60,5 +77,6 @@ def list_tables(metadata):
     if not metadata:
         print("Таблиц нет.")
         return
+        
     for name in metadata:
         print(f"- {name}")

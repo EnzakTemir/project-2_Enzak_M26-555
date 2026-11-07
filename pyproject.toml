@@ -1,7 +1,7 @@
 [project]
 name = "primitive-db"
 version = "0.2.0"
-description = "Add your description here"
+description = "Примитивная база данных с хранением метаданных в JSON"
 readme = "README.md"
 authors = [
     { name = "Enzak", email = "enzaktemir@mail.ru" }
@@ -12,7 +12,6 @@ dependencies = [
 ]
 
 [project.scripts]
-project = "primitive_db.main:main"
 database = "primitive_db.main:main"
 
 [build-system]

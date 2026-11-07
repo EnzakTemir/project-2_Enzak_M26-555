@@ -1,9 +1,22 @@
 #!/usr/bin/env python3
 import shlex
 
+import prompt
+
 from primitive_db import core, utils
 
 DB_META_PATH = "db_meta.json"
+
+
+def welcome():
+    """
+    (Реализовано в рамках 1-го этапа. Вызывается по желанию).
+    """
+    name = prompt.string("May I have your name? ")
+    print(f"\nПривет, {name}!")
+    print("***База данных***")
+    print("<command> exit - выйти из программы")
+    print("<command> help - справочная информация")
 
 
 def print_help():
@@ -18,7 +31,8 @@ def print_help():
 
 
 def run():
-    print_help()
+    """Основной цикл программы."""
+    print_help()  # Сразу показываем справку, как в задании 2-го этапа
     metadata = utils.load_metadata(DB_META_PATH)
 
     while True:
@@ -35,6 +49,9 @@ def run():
             args = shlex.split(user_input)
         except ValueError:
             print(f"Некорректное значение: {user_input}. Попробуйте снова.")
+            continue
+
+        if not args:
             continue
 
         command, rest = args[0], args[1:]
