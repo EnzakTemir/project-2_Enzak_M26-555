@@ -38,4 +38,4 @@ database
 
 ### Asciinema
 
-[![asciicast](https://asciinema.org/a/ВАШ_ID.svg)](https://asciinema.org/a/ВАШ_ID)
+https://asciinema.org/a/kaTZ2snZMkBToctn
