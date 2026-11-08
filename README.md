@@ -1,8 +1,8 @@
-##### Примитивная база данных
+# Примитивная база данных
 
 Пакет реализует простую базу данных с хранением метаданных и данных в JSON-файлах. Поддерживаются CRUD-операции и вывод таблиц в консоль.
 
-#### Установка
+## Установка
 
 ```bash
 # Сборка пакета
@@ -15,12 +15,12 @@ uv pip install dist/*.whl
 uv tool install . --force --reinstall
 ```
 
-## Asciinema
+### Asciinema
 
 https://asciinema.org/a/xrlhBtZbRc87ujWA
 
 
-#### Управление таблицами
+## Управление таблицами
 
 После установки пакета база данных запускается командой:
 
@@ -58,12 +58,12 @@ database
 >>>Введите команду: exit
 ```
 
-## Asciinema
+### Asciinema
 
 https://asciinema.org/a/kaTZ2snZMkBToctn
 
 
-#### CRUD-операции
+## CRUD-операции
 
 | Команда | Описание |
 |--------|----------|
@@ -99,7 +99,7 @@ https://asciinema.org/a/kaTZ2snZMkBToctn
 Количество записей: 0
 ```
 
-## Asciinema
+### Asciinema
 
 https://asciinema.org/a/maz1g3CqQU0xEmQZ
 
