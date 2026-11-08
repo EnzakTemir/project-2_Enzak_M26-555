@@ -1,4 +1,26 @@
-## Управление таблицами
+##### Примитивная база данных
+
+Пакет реализует простую базу данных с хранением метаданных и данных в JSON-файлах. Поддерживаются CRUD-операции и вывод таблиц в консоль.
+
+#### Установка
+
+```bash
+# Сборка пакета
+uv build
+
+# Установка собранного пакета
+uv pip install dist/*.whl
+
+# (или через uv tool)
+uv tool install . --force --reinstall
+```
+
+## Asciinema
+
+https://asciinema.org/a/xrlhBtZbRc87ujWA
+
+
+#### Управление таблицами
 
 После установки пакета база данных запускается командой:
 
@@ -36,12 +58,12 @@ database
 >>>Введите команду: exit
 ```
 
-### Asciinema
+## Asciinema
 
 https://asciinema.org/a/kaTZ2snZMkBToctn
 
 
-### CRUD-операции
+#### CRUD-операции
 
 | Команда | Описание |
 |--------|----------|
@@ -52,7 +74,7 @@ https://asciinema.org/a/kaTZ2snZMkBToctn
 | `delete from <имя_таблицы> where <столбец> = <значение>` | Удалить записи. |
 | `info <имя_таблицы>` | Вывести информацию о таблице. |
 
-#### Пример CRUD-операций
+### Пример CRUD-операций
 
 ```text
 >>> Введите команду: insert into users values ("Sergei", 28, true)
@@ -77,7 +99,7 @@ https://asciinema.org/a/kaTZ2snZMkBToctn
 Количество записей: 0
 ```
 
-### Asciinema
+## Asciinema
 
 https://asciinema.org/a/maz1g3CqQU0xEmQZ
 
