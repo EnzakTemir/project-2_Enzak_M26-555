@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
-"""Модуль с основной логикой управления таблицами базы данных."""
-from primitive_db.constants import VALID_TYPES
-from primitive_db.decorators import confirm_action, handle_db_errors
+
+VALID_TYPES = {"int", "str", "bool"}
 
 
 def _parse_column(col_string):
-    """Вспомогательная функция для разбора строки 'имя:тип'."""
     if ":" not in col_string:
         return None
     name, _, col_type = col_string.partition(":")
@@ -14,9 +12,7 @@ def _parse_column(col_string):
     return name, col_type
 
 
-@handle_db_errors
 def create_table(metadata, table_name, columns):
-    """Создаёт новую таблицу с указанными столбцами."""
     if not table_name:
         print("Ошибка: Имя таблицы не может быть пустым.")
         return metadata
@@ -63,10 +59,7 @@ def create_table(metadata, table_name, columns):
     return metadata
 
 
-@confirm_action
-@handle_db_errors
 def drop_table(metadata, table_name):
-    """Удаляет таблицу из метаданных по её имени."""
     if table_name not in metadata:
         print(f'Ошибка: Таблица "{table_name}" не существует.')
         return metadata
@@ -77,7 +70,6 @@ def drop_table(metadata, table_name):
 
 
 def list_tables(metadata):
-    """Выводит список всех существующих таблиц."""
     if not metadata:
         print("Таблиц нет.")
         return
@@ -85,9 +77,7 @@ def list_tables(metadata):
         print(f"- {name}")
 
 
-@handle_db_errors
 def insert(metadata, table_name, table_data, values):
-    """Добавляет новую запись в таблицу."""
     if table_name not in metadata:
         print(f'Ошибка: Таблица "{table_name}" не существует.')
         return table_data
@@ -104,7 +94,7 @@ def insert(metadata, table_name, table_data, values):
         if expected_type == "bool" and not isinstance(val, bool):
             print(f'Ошибка: Неверный тип для столбца "{col["name"]}". Ожидался bool.')
             return table_data
-        elif expected_type == "int" and not isinstance(val, int):
+        elif expected_type == "int" and (isinstance(val, bool) or not isinstance(val, int)): # noqa: E501
             print(f'Ошибка: Неверный тип для столбца "{col["name"]}". Ожидался int.')
             return table_data
         elif expected_type == "str" and not isinstance(val, str):
@@ -126,7 +116,6 @@ def insert(metadata, table_name, table_data, values):
 
 
 def select(table_data, where_clause=None):
-    """Возвращает записи, подходящие под условие where."""
     if not where_clause:
         return table_data
     result = []
@@ -141,10 +130,8 @@ def select(table_data, where_clause=None):
     return result
 
 
-@handle_db_errors
-def update(table_data, set_clause, where_clause):
-    """Обновляет записи, подходящие под where_clause."""
-    updated_id = None
+def update(table_data, set_clause, where_clause, table_name):
+    updated_ids = []
     for row in table_data:
         match = True
         for col, val in where_clause.items():
@@ -155,23 +142,20 @@ def update(table_data, set_clause, where_clause):
         if match:
             for col, new_val in set_clause.items():
                 row[col] = new_val
-            updated_id = row.get("ID")
-            break  # Обновляем только первую подходящую запись для точного вывода
+            updated_ids.append(row.get("ID"))
 
-    if updated_id is not None:
-        print(f'Запись с ID={updated_id} в таблице успешно обновлена.')
-    else:
+    for uid in updated_ids:
+        print(f'Запись с ID={uid} в таблице "{table_name}" успешно обновлена.')
+    
+    if not updated_ids:
         print("Записи для обновления не найдены.")
     return table_data
 
 
-@confirm_action
-@handle_db_errors
-def delete(table_data, where_clause):
-    """Удаляет записи, подходящие под where_clause."""
-    deleted_id = None
+def delete(table_data, where_clause, table_name):
+    deleted_ids = []
     new_data = []
-    
+
     for row in table_data:
         match = True
         for col, val in where_clause.items():
@@ -179,28 +163,14 @@ def delete(table_data, where_clause):
                 match = False
                 break
         
-        if match and deleted_id is None:
-            deleted_id = row.get("ID")
-            # Не добавляем в new_data (удаляем)
+        if match:
+            deleted_ids.append(row.get("ID"))
         else:
             new_data.append(row)
 
-    if deleted_id is not None:
-        print(f'Запись с ID={deleted_id} успешно удалена из таблицы.')
-    else:
+    for did in deleted_ids:
+        print(f'Запись с ID={did} успешно удалена из таблицы "{table_name}".')
+        
+    if not deleted_ids:
         print("Записи для удаления не найдены.")
     return new_data
-
-
-def create_cached_selector():
-    """Создает функцию select с кэшированием результатов (замыкание)."""
-    cache = {}
-    def cached_select(table_data, where_clause=None):
-        key = (str(table_data), str(where_clause))
-        if key not in cache:
-            print("[CACHE] Выполняю поиск и сохраняю в кэш...")
-            cache[key] = select(table_data, where_clause)
-        else:
-            print("[CACHE] Беру результат из кэша!")
-        return cache[key]
-    return cached_select

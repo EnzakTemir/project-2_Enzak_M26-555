@@ -1,12 +1,8 @@
-
-# Пути к файлам
 META_FILE = "db_meta.json"
 DATA_DIR = "data"
 
-# Типы данных
 VALID_TYPES = {"int", "str", "bool"}
 
-# Команды
 CMD_CREATE = "create_table"
 CMD_DROP = "drop_table"
 CMD_LIST = "list_tables"

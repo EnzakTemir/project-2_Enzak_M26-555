@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Модуль для запуска, игрового цикла и парсинга команд."""
 import shlex
 
 import prompt
@@ -22,10 +21,6 @@ from primitive_db.constants import (
 
 
 def welcome():
-    """Приветствует пользователя и показывает краткую справку.
-    
-    (Реализовано в рамках 1-го этапа. Вызывается по желанию).
-    """
     name = prompt.string("May I have your name? ")
     print(f"\nПривет, {name}!")
     print("***База данных***")
@@ -34,7 +29,6 @@ def welcome():
 
 
 def print_help():
-    """Выводит полную справку по доступным командам."""
     print("\n***Управление таблицами***")
     print("<command> create_table <имя_таблицы> <столбец1:тип> .. - создать таблицу")
     print("<command> list_tables - показать список всех таблиц")
@@ -67,17 +61,15 @@ def print_help():
 
 
 def display_table(rows, columns):
-    """Выводит данные в красивом формате с помощью PrettyTable."""
     table = PrettyTable()
     table.field_names = columns
     for row in rows:
         table.add_row([row.get(col, "") for col in columns])
+    table.align = "c"
     print(table)
 
-
 def run():
-    """Основной цикл программы."""
-    print_help()  # Выводим справку один раз при старте
+    print_help()
 
     metadata = utils.load_metadata(META_FILE)
 
@@ -130,14 +122,17 @@ def run():
             metadata = core.drop_table(metadata, table_name)
             if existed_before and table_name not in metadata:
                 utils.save_metadata(META_FILE, metadata)
-                # При удалении таблицы не забываем удалить и её файл данных
                 utils.delete_table_data(table_name)
 
-        # --- CRUD КОМАНДЫ ---
         elif command == CMD_INSERT:
             try:
                 table_name = args[2]
-                values_str = " ".join(args[4:])
+                values_start = user_input.lower().find("values")
+                if values_start == -1:
+                    print("Некорректный синтаксис insert: нет 'values'.")
+                    continue
+                
+                values_str = user_input[values_start + len("values"):].strip()
                 values = parser.parse_values(values_str)
 
                 if table_name not in metadata:
@@ -194,10 +189,13 @@ def run():
                 set_clause = parser.parse_set(set_str)
                 where_clause = parser.parse_where(where_str)
 
-                table_data = utils.load_table_data(table_name)
-                new_data = core.update(table_data, set_clause, where_clause)
-                utils.save_table_data(table_name, new_data)
+                if where_clause is None:
+                    print("Ошибка: не указано условие WHERE.")
+                    continue
 
+                table_data = utils.load_table_data(table_name)
+                new_data = core.update(table_data, set_clause, where_clause, table_name) # noqa: E501
+                utils.save_table_data(table_name, new_data)
             except (IndexError, ValueError) as e:
                 print(f"Некорректный синтаксис update: {e}")
 
@@ -211,8 +209,12 @@ def run():
                 where_str = " ".join(args[4:])
                 where_clause = parser.parse_where(where_str)
 
+                if where_clause is None:
+                    print("Ошибка: не указано условие WHERE.")
+                    continue
+
                 table_data = utils.load_table_data(table_name)
-                new_data = core.delete(table_data, where_clause)
+                new_data = core.delete(table_data, where_clause, table_name)
                 utils.save_table_data(table_name, new_data)
 
             except (IndexError, ValueError) as e:
