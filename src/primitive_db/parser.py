@@ -1,5 +1,6 @@
 
 def parse_value(val_str):
+    """Преобразует строку в нужный тип: int, bool или str (без кавычек)."""
     val_str = val_str.strip()
     
     if (val_str.startswith('"') and val_str.endswith('"')) or \
@@ -18,6 +19,7 @@ def parse_value(val_str):
 
 
 def parse_where(where_str):
+    """Парсит строку в словарь"""
     if not where_str:
         return None
     parts = where_str.split("=", 1)
@@ -34,6 +36,7 @@ def parse_set(set_str):
 
 
 def parse_values(values_str):
+    """Парсит строку в список значений."""
     if values_str.startswith("(") and values_str.endswith(")"):
         values_str = values_str[1:-1]
     

@@ -10,6 +10,7 @@ VALID_TYPES = {"int", "str", "bool"}
 
 
 def _parse_column(col_string):
+    """Разбирает строку вида 'имя:тип' на кортеж (имя, тип)."""
     if ":" not in col_string:
         return None
     name, _, col_type = col_string.partition(":")
@@ -20,6 +21,7 @@ def _parse_column(col_string):
 
 @handle_db_errors
 def create_table(metadata, table_name, columns):
+    """Создаёт новую таблицу с указанными столбцами."""
     if not table_name:
         raise ValueError("Имя таблицы не может быть пустым.")
 
@@ -65,6 +67,7 @@ def create_table(metadata, table_name, columns):
 @confirm_action("удаление таблицы")
 @handle_db_errors
 def drop_table(metadata, table_name):
+    """Удаляет таблицу из метаданных по её имени."""
     if table_name not in metadata:
         raise ValueError(f'Таблица "{table_name}" не существует.')
 
@@ -75,6 +78,7 @@ def drop_table(metadata, table_name):
 
 @handle_db_errors
 def list_tables(metadata):
+    """Выводит список всех существующих таблиц."""
     if not metadata:
         print("Таблиц нет.")
         return
@@ -85,6 +89,7 @@ def list_tables(metadata):
 @log_time
 @handle_db_errors
 def insert(metadata, table_name, table_data, values):
+    """Добавляет новую запись в таблицу, проверяя количество и типы значений."""
     if table_name not in metadata:
         raise ValueError(f'Таблица "{table_name}" не существует.')
 
@@ -124,6 +129,7 @@ def insert(metadata, table_name, table_data, values):
 @log_time
 @handle_db_errors
 def select(table_data, where_clause=None):
+    """Возвращает записи, подходящие под условие where (или все записи)."""
     if not where_clause:
         return table_data
     result = []
@@ -140,6 +146,7 @@ def select(table_data, where_clause=None):
 
 @handle_db_errors
 def update(table_data, set_clause, where_clause, table_name):
+    """Обновляет записи, подходящие под where_clause, новыми значениями из set_clause.""" # noqa: E501
     updated_ids = []
     for row in table_data:
         match = True
@@ -164,6 +171,7 @@ def update(table_data, set_clause, where_clause, table_name):
 @confirm_action("удаление записи")
 @handle_db_errors
 def delete(table_data, where_clause, table_name):
+    """Удаляет записи, подходящие под where_clause, и возвращает новые данные."""
     deleted_ids = []
     new_data = []
 

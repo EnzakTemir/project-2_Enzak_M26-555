@@ -118,3 +118,8 @@ https://asciinema.org/a/maz1g3CqQU0xEmQZ
 ### Asciinema
 
 https://asciinema.org/a/C4OQiGSQoeYZXc0X
+
+
+# Финальная демонстрация (Полный цикл)
+
+https://asciinema.org/a/TNdzFD7Fhqkm0Sf0
