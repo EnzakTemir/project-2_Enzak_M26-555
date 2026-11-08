@@ -18,6 +18,7 @@ from primitive_db.constants import (
     CMD_UPDATE,
     META_FILE,
 )
+from primitive_db.decorators import create_cacher
 
 
 def welcome():
@@ -68,10 +69,12 @@ def display_table(rows, columns):
     table.align = "c"
     print(table)
 
+
 def run():
     print_help()
 
     metadata = utils.load_metadata(META_FILE)
+    cache_result = create_cacher()
 
     while True:
         try:
@@ -109,9 +112,11 @@ def run():
                 continue
             table_name, columns = args[1], args[2:]
             existed_before = table_name in metadata
-            metadata = core.create_table(metadata, table_name, columns)
-            if not existed_before and table_name in metadata:
-                utils.save_metadata(META_FILE, metadata)
+            new_metadata = core.create_table(metadata, table_name, columns)
+            if new_metadata is not None:
+                metadata = new_metadata
+                if not existed_before and table_name in metadata:
+                    utils.save_metadata(META_FILE, metadata)
 
         elif command == CMD_DROP:
             if len(args) != 2:
@@ -119,10 +124,13 @@ def run():
                 continue
             table_name = args[1]
             existed_before = table_name in metadata
-            metadata = core.drop_table(metadata, table_name)
-            if existed_before and table_name not in metadata:
-                utils.save_metadata(META_FILE, metadata)
-                utils.delete_table_data(table_name)
+            new_metadata = core.drop_table(metadata, table_name)
+            
+            if new_metadata is not None:
+                metadata = new_metadata
+                if existed_before and table_name not in metadata:
+                    utils.save_metadata(META_FILE, metadata)
+                    utils.delete_table_data(table_name)
 
         elif command == CMD_INSERT:
             try:
@@ -141,11 +149,10 @@ def run():
 
                 table_data = utils.load_table_data(table_name)
                 new_data = core.insert(metadata, table_name, table_data, values)
-                utils.save_table_data(table_name, new_data)
+                if new_data is not None:
+                    utils.save_table_data(table_name, new_data)
             except IndexError:
                 print("Некорректный синтаксис insert.")
-            except ValueError as e:
-                print(f"Ошибка: {e}")
 
         elif command == CMD_SELECT:
             try:
@@ -163,15 +170,16 @@ def run():
                     where_clause = parser.parse_where(where_str)
 
                 table_data = utils.load_table_data(table_name)
-                result = core.select(table_data, where_clause)
 
-                columns = [col["name"] for col in metadata[table_name]["columns"]]
-                display_table(result, columns)
+                cache_key = (table_name, str(where_clause), id(table_data))
+                result = cache_result(cache_key, lambda: core.select(table_data, where_clause)) # noqa: E501
+
+                if result is not None:
+                    columns = [col["name"] for col in metadata[table_name]["columns"]]
+                    display_table(result, columns)
 
             except IndexError:
                 print("Некорректный синтаксис select.")
-            except ValueError as e:
-                print(f"Ошибка: {e}")
 
         elif command == CMD_UPDATE:
             try:
@@ -194,8 +202,9 @@ def run():
                     continue
 
                 table_data = utils.load_table_data(table_name)
-                new_data = core.update(table_data, set_clause, where_clause, table_name) # noqa: E501
-                utils.save_table_data(table_name, new_data)
+                new_data = core.update(table_data, set_clause, where_clause, table_name)
+                if new_data is not None:
+                    utils.save_table_data(table_name, new_data)
             except (IndexError, ValueError) as e:
                 print(f"Некорректный синтаксис update: {e}")
 
@@ -215,7 +224,9 @@ def run():
 
                 table_data = utils.load_table_data(table_name)
                 new_data = core.delete(table_data, where_clause, table_name)
-                utils.save_table_data(table_name, new_data)
+                
+                if new_data is not None:
+                    utils.save_table_data(table_name, new_data)
 
             except (IndexError, ValueError) as e:
                 print(f"Некорректный синтаксис delete: {e}")

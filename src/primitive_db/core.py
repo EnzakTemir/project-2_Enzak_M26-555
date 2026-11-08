@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+from primitive_db.decorators import (
+    confirm_action,
+    handle_db_errors,
+    log_time,
+)
+
 VALID_TYPES = {"int", "str", "bool"}
 
 
@@ -12,14 +18,13 @@ def _parse_column(col_string):
     return name, col_type
 
 
+@handle_db_errors
 def create_table(metadata, table_name, columns):
     if not table_name:
-        print("Ошибка: Имя таблицы не может быть пустым.")
-        return metadata
+        raise ValueError("Имя таблицы не может быть пустым.")
 
     if table_name in metadata:
-        print(f'Ошибка: Таблица "{table_name}" уже существует.')
-        return metadata
+        raise ValueError(f'Таблица "{table_name}" уже существует.')
 
     parsed_columns = []
     seen_names = set()
@@ -27,13 +32,11 @@ def create_table(metadata, table_name, columns):
     for col in columns:
         parsed = _parse_column(col)
         if not parsed:
-            print(f"Некорректное значение: {col}. Попробуйте снова.")
-            return metadata
+            raise ValueError(f"Некорректное значение: {col}. Попробуйте снова.")
 
         name, col_type = parsed
         if name in seen_names:
-            print(f"Некорректное значение: {col}. Попробуйте снова.")
-            return metadata
+            raise ValueError(f"Некорректное значение: {col}. Попробуйте снова.")
 
         seen_names.add(name)
         parsed_columns.append({"name": name, "type": col_type})
@@ -59,16 +62,18 @@ def create_table(metadata, table_name, columns):
     return metadata
 
 
+@confirm_action("удаление таблицы")
+@handle_db_errors
 def drop_table(metadata, table_name):
     if table_name not in metadata:
-        print(f'Ошибка: Таблица "{table_name}" не существует.')
-        return metadata
+        raise ValueError(f'Таблица "{table_name}" не существует.')
 
     del metadata[table_name]
     print(f'Таблица "{table_name}" успешно удалена.')
     return metadata
 
 
+@handle_db_errors
 def list_tables(metadata):
     if not metadata:
         print("Таблиц нет.")
@@ -77,29 +82,30 @@ def list_tables(metadata):
         print(f"- {name}")
 
 
+@log_time
+@handle_db_errors
 def insert(metadata, table_name, table_data, values):
     if table_name not in metadata:
-        print(f'Ошибка: Таблица "{table_name}" не существует.')
-        return table_data
+        raise ValueError(f'Таблица "{table_name}" не существует.')
 
     schema = metadata[table_name]["columns"]
     data_columns = [col for col in schema if col["name"] != "ID"]
 
     if len(values) != len(data_columns):
-        print(f"Ошибка: Неверное количество значений. Ожидалось {len(data_columns)}.")
-        return table_data
+        raise ValueError(
+            f"Неверное количество значений. Ожидалось {len(data_columns)}."
+        )
 
     for col, val in zip(data_columns, values):
         expected_type = col["type"]
         if expected_type == "bool" and not isinstance(val, bool):
-            print(f'Ошибка: Неверный тип для столбца "{col["name"]}". Ожидался bool.')
-            return table_data
-        elif expected_type == "int" and (isinstance(val, bool) or not isinstance(val, int)): # noqa: E501
-            print(f'Ошибка: Неверный тип для столбца "{col["name"]}". Ожидался int.')
-            return table_data
+            raise ValueError(f'Неверный тип для столбца "{col["name"]}". Ожидался bool.') # noqa: E501
+        elif expected_type == "int" and (
+            isinstance(val, bool) or not isinstance(val, int)
+        ):
+            raise ValueError(f'Неверный тип для столбца "{col["name"]}". Ожидался int.')
         elif expected_type == "str" and not isinstance(val, str):
-            print(f'Ошибка: Неверный тип для столбца "{col["name"]}". Ожидался str.')
-            return table_data
+            raise ValueError(f'Неверный тип для столбца "{col["name"]}". Ожидался str.')
 
     if table_data:
         new_id = max(row["ID"] for row in table_data) + 1
@@ -115,6 +121,8 @@ def insert(metadata, table_name, table_data, values):
     return table_data
 
 
+@log_time
+@handle_db_errors
 def select(table_data, where_clause=None):
     if not where_clause:
         return table_data
@@ -130,6 +138,7 @@ def select(table_data, where_clause=None):
     return result
 
 
+@handle_db_errors
 def update(table_data, set_clause, where_clause, table_name):
     updated_ids = []
     for row in table_data:
@@ -146,12 +155,14 @@ def update(table_data, set_clause, where_clause, table_name):
 
     for uid in updated_ids:
         print(f'Запись с ID={uid} в таблице "{table_name}" успешно обновлена.')
-    
+
     if not updated_ids:
         print("Записи для обновления не найдены.")
     return table_data
 
 
+@confirm_action("удаление записи")
+@handle_db_errors
 def delete(table_data, where_clause, table_name):
     deleted_ids = []
     new_data = []
@@ -162,7 +173,7 @@ def delete(table_data, where_clause, table_name):
             if row.get(col) != val:
                 match = False
                 break
-        
+
         if match:
             deleted_ids.append(row.get("ID"))
         else:
@@ -170,7 +181,7 @@ def delete(table_data, where_clause, table_name):
 
     for did in deleted_ids:
         print(f'Запись с ID={did} успешно удалена из таблицы "{table_name}".')
-        
+
     if not deleted_ids:
         print("Записи для удаления не найдены.")
     return new_data
