@@ -75,6 +75,7 @@ https://asciinema.org/a/kaTZ2snZMkBToctn
 Таблица: users
 Столбцы: ID:int, name:str, age:int, is_active:bool
 Количество записей: 0
+```
 
 ### Asciinema
 
